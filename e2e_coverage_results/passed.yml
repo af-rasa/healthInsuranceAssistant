@@ -1,0 +1,63 @@
+fixtures: []
+metadata: []
+stub_custom_actions: {}
+test_cases:
+- test_case: valid policy check for John
+  steps:
+  - user: I want to check my policy status
+  - bot: What is the policy holder's name?
+  - user: John
+  - slot_was_set:
+    - member_name: "John"
+  - slot_was_set:
+    - current_date: "02/05/2025"
+  - slot_was_set:
+    - policy_found: true
+  - slot_was_set:
+    - policy_end_date: "2030-12-31"
+  - slot_was_set:
+    - policy_active: true
+  - bot: As of 02/05/2025, the policy for John is active. The policy is due to end on 2030-12-31.
+
+- test_case: valid policy check for Angel
+  steps:
+  - user: I want to check my policy status
+  - bot: What is the policy holder's name?
+  - user: Angel
+  - slot_was_set:
+    - member_name: "Angel"
+  - slot_was_set:
+    - current_date: "02/05/2025"
+  - slot_was_set:
+    - policy_found: true
+  - slot_was_set:
+    - policy_end_date: "2024-12-31"
+  - slot_was_set:
+    - policy_active: false
+  - bot: As of 02/05/2025, the policy for Angel is not active. The policy was ended on 2024-12-31.
+
+- test_case: invalid member name check
+  steps:
+  - user: I want to check my policy status
+  - bot: What is the policy holder's name?
+  - user: InvalidName
+  - slot_was_set:
+    - member_name: "InvalidName"
+  - slot_was_set:
+    - current_date: "02/05/2025"
+  - slot_was_set:
+    - policy_found: false
+  - bot: There is no member by that name.
+
+- test_case: expired policy check
+  steps:
+  - user: I want to check my policy status
+  - bot: What is the policy holder's name?
+  - user: ExpiredMember
+  - slot_was_set:
+    - member_name: "ExpiredMember"
+  - slot_was_set:
+    - current_date: "02/05/2025"
+  - slot_was_set:
+    - policy_found: false
+  - bot: There is no member by that name.

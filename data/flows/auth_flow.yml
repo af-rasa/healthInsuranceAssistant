@@ -1,0 +1,23 @@
+flows:
+  authentication:
+    description: "Authenticate user with member ID and DOB.  If successful, set auth_status to true."
+    if: slots.auth_status == false # Flow guard to prevent loops
+    steps:
+      - collect: member_id
+      - action: authenticate_user_action
+        next:
+          - if: slots.member_found
+            then:
+              - collect: dob_input
+                next:
+                  - if: slots.dob_input == slots.member_dob
+                    then:
+                      - action: auth_successful
+                        # - action: continue_conversation
+                        next: END
+                  - else:
+                      - action: utter_incorrect_dob
+                        next: END
+          - else:
+              - action: utter_member_not_found
+                next: END

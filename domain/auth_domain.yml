@@ -1,0 +1,47 @@
+actions:
+  - authenticate_user_action
+  - auth_successful
+  # - continue_conversation
+
+slots:
+  member_found:
+    type: bool
+    mappings:
+      - type: custom
+
+  member_id:
+    type: text
+    mappings:
+      - type: from_llm
+
+  dob_input:
+    type: text
+    mappings:
+      - type: from_llm
+
+  member_name:
+    type: text
+    mappings:
+      - type: custom
+
+  member_dob:
+    type: text
+    mappings:
+      - type: custom
+
+  policy_end_date:
+    type: text
+    mappings:
+      - type: custom
+
+responses:
+  utter_ask_member_id:
+    - text: "Please enter your member ID:"
+  utter_member_not_found:
+    - text: "Sorry, I couldn't find a member with that ID. Please try again."
+  utter_ask_dob_input:
+    - text: "Please enter your date of birth (YYYY-MM-DD):"
+  utter_incorrect_dob:
+    - text: "The date of birth you entered doesn't match our records."
+  utter_auth_successful:
+    - text: "Authentication successful!"

@@ -1,0 +1,25 @@
+flows:
+  policy_status_authenticated:
+    description: "Check policy status.  Is blocked to unauthenticated users. if auth_status is false, this flow cannot be invoked."
+    if: slots.auth_status #this is a flow guard (blocker).
+    steps:
+      - id: "is_policy_active"
+        action: is_policy_active_action
+        next:
+          - if: slots.is_policy_active == true
+            then:
+              - action: utter_policy_active
+                next: END
+              # - link: "post_authenticated_main_flow"
+          - else:
+              - action: utter_policy_not_active
+                next: END
+              # - link: "post_authenticated_main_flow"
+    #Old Flow:
+    # - noop: true
+    #   next:
+    #     - if: slots.auth_status == false #not really a flow blocker.
+    #       then:
+    #         - call: authentication #this works fine -no errors when training. Not sure why it's showing as an error in editor.
+    #           next: "is_policy_active"
+    #     - else: "is_policy_active"

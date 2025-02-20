@@ -1,0 +1,29 @@
+# The config recipe.
+# https://rasa.com/docs/rasa-pro/nlu-based-assistants/model-configuration/
+recipe: default.v1
+
+# The assistant project unique identifier
+# This default value must be replaced with a unique assistant name within your deployment
+assistant_id: 20250211-105423-knurled-channel
+
+# Configuration for Rasa NLU.
+# https://rasa.com/docs/rasa-pro/nlu-based-assistants/components/
+language: en
+
+pipeline:
+  - name: SingleStepLLMCommandGenerator
+    llm:
+      model: gpt-4-0613
+      provider: openai
+    flow_retrieval:
+      active: false
+    # flow_retrieval:  #once flow retrieval is enabled, the model will be used to retrieve the flow from the database.
+    #   active: true
+    #   embeddings:
+    #     provider: openai
+    #     model: text-embedding-ada-002
+
+# Configuration for Rasa Core.
+# https://rasa.com/docs/rasa-pro/concepts/policies/policy-overview/
+policies:
+  - name: FlowPolicy

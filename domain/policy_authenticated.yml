@@ -1,0 +1,14 @@
+actions:
+  - is_policy_active_action
+
+slots:
+  is_policy_active:
+    type: bool
+    mappings:
+      - type: custom
+
+responses:
+  utter_policy_active:
+    - text: "Your policy is currently active."
+  utter_policy_not_active:
+    - text: "Your policy is not currently active."
