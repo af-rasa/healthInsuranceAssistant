@@ -1,20 +1,3 @@
-# flows:
-#   policy_status_authenticated:
-#     description: "Check policy status.  Is blocked to unauthenticated users. if auth_status is false, this flow cannot be invoked."
-#     if: slots.auth_status #this is a flow guard (blocker).
-#     steps:
-#       - id: "is_policy_active"
-#         action: is_policy_active_action
-#         next:
-#           - if: slots.is_policy_active == true
-#             then:
-#               - action: utter_policy_active
-#                 next: END
-#               # - link: "post_authenticated_main_flow"
-#           - else:
-#               - action: utter_policy_not_active
-#                 next: END
-#               # - link: "post_authenticated_main_flow"
 flows:
   policy_status:
     description: "Entry point for policy status requests"
