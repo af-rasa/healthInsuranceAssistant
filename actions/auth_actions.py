@@ -32,12 +32,36 @@ class AuthenticateUser(Action):
                 )
                 
                 if member_record:
-                    return [
+                    events = [
                         SlotSet("member_found", True),
                         SlotSet("member_name", member_record['name']),
                         SlotSet("member_dob", member_record['dob']),
-                        SlotSet("policy_end_date", member_record['policyEndDate'])
+                        SlotSet("policy_end_date", member_record['policyEndDate']),
+                        SlotSet("has_child_accounts", member_record['has_child_accounts'])
                     ]
+
+                    # Handle child accounts if they exist
+                    if member_record['has_child_accounts'] and member_record['child_accounts']:
+                        child_ids = [id.strip() for id in member_record['child_accounts'].split(',')]
+                        child_details = []
+                        
+                        # Fetch details for each child account
+                        for child_id in child_ids:
+                            child_record = next(
+                                (record for record in records if record['memberID'] == child_id),
+                                None
+                            )
+                            if child_record:
+                                child_details.append({
+                                    'memberID': child_record['memberID'],
+                                    'name': child_record['name'],
+                                    'dob': child_record['dob'],
+                                    'policyEndDate': child_record['policyEndDate']
+                                })
+                        
+                        events.append(SlotSet("child_accounts", child_details))
+                    
+                    return events
                 
             return [SlotSet("member_found", False)]
             

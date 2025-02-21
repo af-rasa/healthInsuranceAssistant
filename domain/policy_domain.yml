@@ -1,0 +1,47 @@
+actions:
+  - is_policy_active_action
+  - check_specific_policy_status
+  - action_ask_selected_account_id
+
+slots:
+  is_policy_active:
+    type: bool
+    mappings:
+      - type: custom
+
+  selected_account_id:
+    type: text
+    mappings:
+      - type: from_llm
+
+  is_child_account:
+    type: bool
+    mappings:
+      - type: custom
+
+  child_name:
+    type: text
+    mappings:
+      - type: custom
+
+responses:
+  # utter_ask_selected_account_id:
+  #   - text: "Which account's policy status would you like to check?"
+  # utter_policy_active:
+  #   - text: "Your policy is currently active."
+  # utter_policy_not_active:
+  #   - text: "Your policy is not currently active."
+  utter_policy_active_for_member:
+    - condition:
+        - type: slot
+          name: is_child_account
+          value: true
+      text: "The policy for {child_name} is currently active."
+    - text: "The policy for {member_name} is currently active."
+  utter_policy_not_active_for_member:
+    - condition:
+        - type: slot
+          name: is_child_account
+          value: true
+      text: "The policy for {child_name} is not currently active."
+    - text: "The policy for {member_name} is not currently active."

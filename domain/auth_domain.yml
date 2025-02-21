@@ -34,6 +34,16 @@ slots:
     mappings:
       - type: custom
 
+  has_child_accounts:
+    type: bool
+    mappings:
+      - type: custom
+
+  child_accounts:
+    type: any
+    mappings:
+      - type: custom
+
 responses:
   utter_ask_member_id:
     - text: "Please enter your member ID:"
@@ -45,3 +55,5 @@ responses:
     - text: "The date of birth you entered doesn't match our records."
   utter_auth_successful:
     - text: "Authentication successful!"
+  utter_already_authenticated:
+    - text: "You are already authenticated. No need to authenticate again."

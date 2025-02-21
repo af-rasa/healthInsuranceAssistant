@@ -5,7 +5,7 @@ flows:
     steps:
       - set_slots:
           - flow_name: "policy status"
-      - action: utter_unauthorized
+      - noop: true
         next:
           - if: slots.auth_status == false
             then:
@@ -16,17 +16,28 @@ flows:
       - id: "policy_status_authenticated"
         noop: true
         next:
-          - if: slots.auth_status == true
+          - if: slots.auth_status == true and slots.has_child_accounts == true
+            then:
+              - collect: selected_account_id
+                ask_before_filling: true
+              # - action: action_ask_selected_account_id
+              - action: check_specific_policy_status
+                next: send_policy_status_message
+          - if: slots.auth_status == true and slots.has_child_accounts == false
             then:
               - action: is_policy_active_action
-                next:
-                  - if: slots.is_policy_active == true
-                    then:
-                      - action: utter_policy_active
-                        next: END
-                  - else:
-                      - action: utter_policy_not_active
-                        next: END
+                next: send_policy_status_message
           - else:
               - call: authentication
+                next: END
+
+      - id: send_policy_status_message
+        noop: true
+        next:
+          - if: slots.is_policy_active == true
+            then:
+              - action: utter_policy_active_for_member
+                next: END
+          - else:
+              - action: utter_policy_not_active_for_member
                 next: END
