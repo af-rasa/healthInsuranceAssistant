@@ -68,6 +68,26 @@ A Rasa-based chatbot that helps users access their health insurance information 
 - Connects to external API (JSONbin) for member verification
 - Implements secure API key management
 
+### Recent Updates & Improvements
+
+#### Code Organization
+- Restructured policy-related actions into dedicated directory (`actions/policy_/`)
+- Separated policy actions into individual files for better maintainability:
+  - `check_specific_policy_status.py`
+  - `ask_selected_account_id.py`
+  - `is_policy_active.py`
+
+#### Flow Optimizations
+- Simplified policy status flow
+- Consolidated policy status responses into a single conditional response
+- Improved handling of primary/child account policy checks
+- Enhanced slot persistence between conversations
+
+#### Response Handling
+- Implemented conditional responses for policy status
+- Combined active/inactive status checks into unified response template
+- Improved message personalization for both primary and child accounts
+
 ## Flow Structure
 
 1. **Initial Greeting**

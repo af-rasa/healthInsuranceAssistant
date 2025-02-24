@@ -31,17 +31,26 @@ responses:
   #   - text: "Your policy is currently active."
   # utter_policy_not_active:
   #   - text: "Your policy is not currently active."
-  utter_policy_active_for_member:
+  utter_policy_status:
     - condition:
         - type: slot
           name: is_child_account
+          value: true
+        - type: slot
+          name: is_policy_active
           value: true
       text: "The policy for {child_name} is currently active."
-    - text: "The policy for {member_name} is currently active."
-  utter_policy_not_active_for_member:
     - condition:
         - type: slot
           name: is_child_account
           value: true
+        - type: slot
+          name: is_policy_active
+          value: false
       text: "The policy for {child_name} is not currently active."
+    - condition:
+        - type: slot
+          name: is_policy_active
+          value: true
+      text: "The policy for {member_name} is currently active."
     - text: "The policy for {member_name} is not currently active."
