@@ -1,4 +1,4 @@
-from typing import Any, Text, Dict, List
+from typing import Any, Text, Dict, List, Optional
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
@@ -11,70 +11,110 @@ class CheckSpecificPolicyStatus(Action):
     """
     
     def name(self) -> Text:
-        # The name that will be used to call this action from the Rasa flow
         return "check_specific_policy_status"
+
+    def _find_original_member_id(self, tracker: Tracker) -> Optional[str]:
+        """
+        Helper function to find the original member ID from tracker history.
+        
+        Parameters:
+        - tracker: The conversation tracker containing event history
+        
+        Returns:
+        - The original member ID if found, None if not found
+        """
+        return next(
+            (event.get('value') for event in reversed(tracker.events)
+            if event.get('event') == 'slot' and 
+            event.get('name') == 'member_id' and 
+            event.get('value')),
+            None
+        )
+
+    def _find_child_account(self, child_accounts: List[Dict], selected_id: str) -> Optional[Dict]:
+        """
+        Helper function to find a child account by ID.
+        
+        Parameters:
+        - child_accounts: List of all child accounts
+        - selected_id: The ID we're looking for
+        
+        Returns:
+        - The child account if found, None if not found
+        """
+        return next(
+            (account for account in child_accounts if account['memberID'] == selected_id),
+            None
+        )
+
+    def _check_policy_status(self, policy_end_date: str) -> bool:
+        """
+        Helper function to check if a policy is active based on its end date.
+        
+        Parameters:
+        - policy_end_date: The date the policy ends
+        
+        Returns:
+        - True if policy is active, False if not
+        """
+        try:
+            end_date = datetime.strptime(policy_end_date, "%Y-%m-%d")
+            return end_date > datetime.now()
+        except Exception:
+            return False
+
+    def _get_account_details(self, tracker: Tracker, selected_id: str) -> tuple[str, List[Dict[Text, Any]]]:
+        """
+        Helper function to get account details and prepare events.
+        
+        Parameters:
+        - tracker: The conversation tracker
+        - selected_id: The selected account ID
+        
+        Returns:
+        - Tuple of (policy_end_date, events)
+        """
+        events = []
+        member_id = tracker.get_slot("member_id")
+        
+        if not member_id:
+            original_member_id = self._find_original_member_id(tracker)
+            is_primary = selected_id == original_member_id
+        else:
+            is_primary = selected_id == member_id
+
+        if is_primary:
+            return tracker.get_slot("policy_end_date"), [SlotSet("is_child_account", False)]
+        
+        child_account = self._find_child_account(tracker.get_slot("child_accounts") or [], selected_id)
+        if child_account:
+            return child_account['policyEndDate'], [
+                SlotSet("child_name", child_account['name']),
+                SlotSet("is_child_account", True)
+            ]
+        return None, []
 
     def run(self, dispatcher: CollectingDispatcher,
             tracker: Tracker,
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+        """
+        This is the main function that checks if a policy is active for either the primary account holder
+        or a child account. It looks at the policy end date and compares it with today's date.
         
-        # Get important information from the conversation tracker
-        selected_id = tracker.get_slot("selected_account_id")  # The ID of the account the user selected
-        member_id = tracker.get_slot("member_id")             # The primary account holder's ID
-        child_accounts = tracker.get_slot("child_accounts") or []  # List of child accounts, empty if none exist
+        Parameters:
+        - dispatcher: Like a messenger - helps the bot send messages to the user
+        - tracker: Like the bot's memory - keeps track of all conversation information
+        - domain: Like a rulebook - contains all the things the bot can say and do
         
-        events = []  # List to store changes we want to make to the conversation state
+        Returns:
+        - A list of updates to make to the conversation memory (like marking if a policy is active)
+        """
+        selected_id = tracker.get_slot("selected_account_id")
+        policy_end_date, events = self._get_account_details(tracker, selected_id)
         
-        # CASE 1: When the primary member_id is not available (happens after first pass)
-        if not member_id:
-            # If the selected ID matches the known primary account ID pattern
-            if selected_id == '101':  # This is the primary account ID pattern
-                policy_end_date = tracker.get_slot("policy_end_date")
-                events.append(SlotSet("is_child_account", False))  # Mark this as primary account check
-            else:
-                # Look through child accounts to find a matching ID
-                child_account = next(
-                    (account for account in child_accounts if account['memberID'] == selected_id),
-                    None
-                )
-                if child_account:  # If we found a matching child account
-                    policy_end_date = child_account['policyEndDate']
-                    events.append(SlotSet("child_name", child_account['name']))
-                    events.append(SlotSet("is_child_account", True))  # Mark this as child account check
-                else:
-                    # No matching account found - return inactive status
-                    return [SlotSet("is_policy_active", False)]
-        
-        # CASE 2: When we have the primary member_id available (first pass)
-        else:
-            # Check if user selected the primary account
-            if selected_id == member_id:
-                policy_end_date = tracker.get_slot("policy_end_date")
-                events.append(SlotSet("is_child_account", False))
-            else:
-                # Look for matching child account
-                child_account = next(
-                    (account for account in child_accounts if account['memberID'] == selected_id),
-                    None
-                )
-                if child_account:
-                    policy_end_date = child_account['policyEndDate']
-                    events.append(SlotSet("child_name", child_account['name']))
-                    events.append(SlotSet("is_child_account", True))
-                else:
-                    # No matching account found
-                    return [SlotSet("is_policy_active", False)]
-
-        try:
-            # Convert the policy end date string to a datetime object
-            end_date = datetime.strptime(policy_end_date, "%Y-%m-%d")
-            current_date = datetime.now()
-            
-            # Policy is active if end date is in the future
-            is_active = end_date > current_date
-            events.append(SlotSet("is_policy_active", is_active))
-            return events
-            
-        except Exception as e:
-            # If there's any error processing the dates, return inactive status
+        if not policy_end_date:
             return [SlotSet("is_policy_active", False)]
+        
+        is_active = self._check_policy_status(policy_end_date)
+        events.append(SlotSet("is_policy_active", is_active))
+        return events

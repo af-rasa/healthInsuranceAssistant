@@ -14,26 +14,37 @@ class IsPolicyActiveAction(Action):
         # The name that will be used to call this action from the Rasa flow
         return "is_policy_active_action"
 
+    def _check_policy_status(self, policy_end_date: str) -> bool:
+        """
+        Helper function to check if a policy is active based on its end date.
+        
+        Parameters:
+        - policy_end_date: The date the policy ends
+        
+        Returns:
+        - True if policy is active, False if not
+        """
+        try:
+            end_date = datetime.strptime(policy_end_date, "%Y-%m-%d")
+            return end_date > datetime.now()
+        except Exception:
+            return False
+
     def run(self, dispatcher: CollectingDispatcher,
             tracker: Tracker,
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+        """
+        This is the main function that checks if a primary account holder's policy is active
+        by comparing the policy end date with today's date.
         
-        # Get the policy end date from conversation tracker
+        Parameters:
+        - dispatcher: Like a messenger - helps the bot send messages to the user
+        - tracker: Like the bot's memory - keeps track of all conversation information
+        - domain: Like a rulebook - contains all the things the bot can say and do
+        
+        Returns:
+        - A list with one update: whether the policy is active (true) or not (false)
+        """
         policy_end_date = tracker.get_slot("policy_end_date")
-        
-        # If no end date is found, return inactive status
-        if not policy_end_date:
-            return [SlotSet("is_policy_active", False)]
-        
-        try:
-            # Convert the policy end date string to a datetime object
-            end_date = datetime.strptime(policy_end_date, "%Y-%m-%d")
-            current_date = datetime.now()
-            
-            # Policy is active if end date is in the future
-            is_active = end_date > current_date
-            return [SlotSet("is_policy_active", is_active)]
-            
-        except Exception as e:
-            # If there's any error processing the dates, return inactive status
-            return [SlotSet("is_policy_active", False)] 
+        is_active = policy_end_date and self._check_policy_status(policy_end_date)
+        return [SlotSet("is_policy_active", is_active)] 

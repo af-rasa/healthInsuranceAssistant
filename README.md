@@ -73,15 +73,25 @@ A Rasa-based chatbot that helps users access their health insurance information 
 #### Code Organization
 - Restructured policy-related actions into dedicated directory (`actions/policy_/`)
 - Separated policy actions into individual files for better maintainability:
-  - `check_specific_policy_status.py`
-  - `ask_selected_account_id.py`
-  - `is_policy_active.py`
+  - `check_specific_policy_status.py`: Handles policy status checks for both primary and child accounts
+  - `ask_selected_account_id.py`: Manages account selection interface
+  - `is_policy_active.py`: Handles primary account policy status checks
+
+#### Code Quality Improvements
+- Added comprehensive documentation for low-code audience
+- Extracted common functionality into helper methods
+- Improved error handling and edge cases
+- Removed code duplication
+- Enhanced type hints for better code clarity
+- Simplified complex conditional logic
+- Made code more testable and maintainable
 
 #### Flow Optimizations
 - Simplified policy status flow
 - Consolidated policy status responses into a single conditional response
 - Improved handling of primary/child account policy checks
 - Enhanced slot persistence between conversations
+- Removed hardcoded values for better maintainability
 
 #### Response Handling
 - Implemented conditional responses for policy status

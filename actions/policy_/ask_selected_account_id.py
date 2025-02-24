@@ -1,8 +1,7 @@
-from typing import Any, Text, Dict, List
+from typing import Any, Text, Dict, List, Optional
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
-from datetime import datetime
 
 class AskSelectedAccountId(Action):
     """
@@ -12,53 +11,75 @@ class AskSelectedAccountId(Action):
     """
     
     def name(self) -> Text:
-        # The name that will be used to call this action from the Rasa flow
         return "action_ask_selected_account_id"
+
+    def _find_original_member_id(self, tracker: Tracker) -> Optional[str]:
+        """
+        Helper function to find the original member ID from tracker history.
+        
+        Parameters:
+        - tracker: The conversation tracker containing event history
+        
+        Returns:
+        - The original member ID if found, None if not found
+        """
+        return next(
+            (event.get('value') for event in reversed(tracker.events)
+            if event.get('event') == 'slot' and 
+            event.get('name') == 'member_id' and 
+            event.get('value')),
+            None
+        )
+
+    def _create_account_button(self, name: str, member_id: str, is_primary: bool = False) -> Dict:
+        """
+        Helper function to create a button for an account.
+        
+        Parameters:
+        - name: The name to display on the button
+        - member_id: The ID to set when button is clicked
+        - is_primary: Whether this is the primary account button
+        
+        Returns:
+        - A dictionary containing button configuration
+        """
+        title = f"{name} (Primary Account Holder)" if is_primary else name
+        return {
+            "title": title,
+            "payload": f"SetSlots(selected_account_id='{member_id}')"
+        }
 
     def run(self, dispatcher: CollectingDispatcher,
             tracker: Tracker,
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+        """
+        This is the main function that runs when the bot needs to ask which account to check.
         
-        # Initialize empty list to store our button options
+        Parameters:
+        - dispatcher: This is like a messenger - it helps the bot send messages to the user
+        - tracker: This is like the bot's memory - it remembers everything about the conversation
+        - domain: This contains all the bot's knowledge - what it can say and do
+        
+        Returns:
+        - A list of any changes we want to make to the conversation memory
+        """
         buttons = []
+        primary_id = tracker.get_slot("member_id")
+        primary_name = tracker.get_slot("member_name")
         
-        # Get primary account information from conversation tracker
-        primary_id = tracker.get_slot("member_id")      # Primary account holder's ID
-        primary_name = tracker.get_slot("member_name")  # Primary account holder's name
-        
-        # Handle case where primary_id might be missing but user is still authenticated
+        # Restore primary_id if missing but user is authenticated
         if (not primary_id or primary_id == 'None') and tracker.get_slot("auth_status"):
-            # Look through conversation history to find the last known member_id
-            all_slots = tracker.current_slot_values()
-            # Search through past events to find the most recent valid member_id
-            for event in reversed(tracker.events):
-                if (event.get('event') == 'slot' and 
-                    event.get('name') == 'member_id' and 
-                    event.get('value')):
-                    primary_id = event.get('value')
-                    break
+            primary_id = self._find_original_member_id(tracker)
         
-        # Create button for primary account holder
-        buttons.append({
-            "title": f"{primary_name} (Primary Account Holder)",  # Button text
-            "payload": f"SetSlots(selected_account_id='{primary_id}')"  # What happens when button is clicked
-        })
+        # Add primary account button
+        buttons.append(self._create_account_button(primary_name, primary_id, is_primary=True))
         
-        # Get list of child accounts (if any exist)
-        child_accounts = tracker.get_slot("child_accounts") or []
+        # Add child account buttons
+        for child in (tracker.get_slot("child_accounts") or []):
+            buttons.append(self._create_account_button(child['name'], child['memberID']))
         
-        # Create a button for each child account
-        for child in child_accounts:
-            buttons.append({
-                "title": f"{child['name']}",  # Button text shows child's name
-                "payload": f"SetSlots(selected_account_id='{child['memberID']}')"  # Sets selected ID to child's ID
-            })
-        
-        # Display the message with all our buttons
         dispatcher.utter_message(
             text="Which account's policy status would you like to check?",
             buttons=buttons
         )
-        
-        # No need to modify any conversation state
         return []
