@@ -23,7 +23,9 @@ flows:
               - action: check_specific_policy_status
                 next: send_policy_status_message
           - else:
-              - action: is_policy_active_action
+              - set_slots:
+                  - selected_account_id: $slots.member_id
+              - action: check_specific_policy_status
                 next: send_policy_status_message
 
       - id: send_policy_status_message

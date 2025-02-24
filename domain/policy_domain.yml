@@ -1,5 +1,5 @@
 actions:
-  - is_policy_active_action
+  # - is_policy_active_action
   - check_specific_policy_status
   - action_ask_selected_account_id
 
