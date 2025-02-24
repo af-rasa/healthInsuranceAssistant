@@ -1,6 +1,7 @@
 flows:
   authentication:
     description: "Authenticate user with member ID and DOB.  If successful, set auth_status to true." # Flow guard to prevent loops
+    name: "Authentication"
     steps:
       - noop: true
         next:
@@ -12,6 +13,7 @@ flows:
                   - if: slots.member_found
                     then:
                       - collect: dob_input
+                        description: "Detect and capture any date format provided by the user, then transform it into the standardized YYYY-MM-DD format required for processing. Apply comprehensive date recognition algorithms to handle diverse input formats including DD/MM/YYYY, MM-DD-YY, Month Day Year, and any other variations users might provide. When a non-compliant format is detected, convert it to YYYY-MM-DD and simultaneously update the dob_input slot with this standardized value to ensure consistent downstream processing. Provide clear feedback to users when their date has been reformatted for system compatibility."
                         next:
                           - if: slots.dob_input == slots.member_dob
                             then:

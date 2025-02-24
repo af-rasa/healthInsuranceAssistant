@@ -10,7 +10,12 @@ flows:
           - if: slots.auth_status == false
             then:
               - call: authentication
-                next: "policy_status_authenticated"
+                next:
+                  - if: slots.auth_status == true
+                    then: policy_status_authenticated
+                  - else:
+                      - action: utter_unauthorized
+                        next: END
           - else: "policy_status_authenticated"
 
       - id: "policy_status_authenticated"
