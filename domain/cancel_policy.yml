@@ -1,0 +1,153 @@
+actions:
+  - check_selected_account_type
+  - cancel_policy_action
+  - set_no_child_account_info
+
+slots:
+  is_primary_account:
+    type: bool
+    mappings:
+      - type: custom
+
+  affected_child_ids:
+    type: list
+    mappings:
+      - type: custom
+
+  cancellation_date:
+    type: text
+    mappings:
+      - type: custom
+
+  cancellation_success:
+    type: bool
+    mappings:
+      - type: custom
+
+  all_cancelled:
+    type: bool
+    mappings:
+      - type: custom
+
+  cancelled_ids:
+    type: list
+    mappings:
+      - type: custom
+
+  already_cancelled_ids:
+    type: list
+    mappings:
+      - type: custom
+
+  already_canceled:
+    type: bool
+    mappings:
+      - type: custom
+
+  existing_end_date:
+    type: text
+    mappings:
+      - type: custom
+
+  cancellation_error:
+    type: bool
+    mappings:
+      - type: custom
+
+  cancel_confirmation:
+    type: bool
+    mappings:
+      - type: from_llm
+
+responses:
+  utter_ask_cancel_confirmation:
+    - condition:
+        - type: slot
+          name: is_primary_account
+          value: true
+        - type: slot
+          name: has_child_accounts
+          value: true
+      text: "Warning: Cancelling the primary account will also cancel all child accounts. Are you sure you want to cancel this policy?"
+      buttons:
+        - payload: "/SetSlots(cancel_confirmation=true)"
+          title: "Yes, cancel policy"
+        - payload: "/SetSlots(cancel_confirmation=false)"
+          title: "No, keep policy active"
+    - condition:
+        - type: slot
+          name: is_primary_account
+          value: true
+      text: "Are you sure you want to cancel your health insurance policy?"
+      buttons:
+        - payload: "/SetSlots(cancel_confirmation=true)"
+          title: "Yes, cancel policy"
+        - payload: "/SetSlots(cancel_confirmation=false)"
+          title: "No, keep policy active"
+    - condition:
+        - type: slot
+          name: is_child_account
+          value: true
+      text: "Are you sure you want to cancel the policy for {child_name}?"
+      buttons:
+        - payload: "/SetSlots(cancel_confirmation=true)"
+          title: "Yes, cancel policy"
+        - payload: "/SetSlots(cancel_confirmation=false)"
+          title: "No, keep policy active"
+    - text: "Are you sure you want to cancel your health insurance policy?"
+      buttons:
+        - payload: "/SetSlots(cancel_confirmation=true)"
+          title: "Yes, cancel policy"
+        - payload: "/SetSlots(cancel_confirmation=false)"
+          title: "No, keep policy active"
+
+  utter_policy_cancelled:
+    - condition:
+        - type: slot
+          name: already_canceled
+          value: true
+      text: "This policy is already cancelled. The policy end date is {existing_end_date}."
+    - condition:
+        - type: slot
+          name: is_primary_account
+          value: true
+        - type: slot
+          name: has_child_accounts
+          value: true
+        - type: slot
+          name: all_cancelled
+          value: true
+      text: "Your policy and all associated child policies have been cancelled. The policies will end on {cancellation_date}."
+    - condition:
+        - type: slot
+          name: is_primary_account
+          value: true
+        - type: slot
+          name: all_cancelled
+          value: true
+      text: "Your policy has been cancelled. The policy will end on {cancellation_date}."
+    - condition:
+        - type: slot
+          name: is_primary_account
+          value: true
+        - type: slot
+          name: all_cancelled
+          value: false
+      text: "Some policies could not be cancelled. Please contact customer service for assistance."
+    - condition:
+        - type: slot
+          name: is_child_account
+          value: true
+        - type: slot
+          name: cancellation_success
+          value: true
+      text: "The policy for {child_name} has been cancelled. The policy will end on {cancellation_date}."
+    - condition:
+        - type: slot
+          name: cancellation_success
+          value: true
+      text: "Your policy has been cancelled. The policy will end on {cancellation_date}."
+    - text: "There was an error cancelling the policy. Please contact customer service for assistance."
+
+  utter_cancellation_aborted:
+    - text: "Policy cancellation has been aborted. Your policy remains active."

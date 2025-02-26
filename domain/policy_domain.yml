@@ -24,13 +24,12 @@ slots:
     mappings:
       - type: custom
 
+  account_selection_message:
+    type: text
+    mappings:
+      - type: custom
+
 responses:
-  # utter_ask_selected_account_id:
-  #   - text: "Which account's policy status would you like to check?"
-  # utter_policy_active:
-  #   - text: "Your policy is currently active."
-  # utter_policy_not_active:
-  #   - text: "Your policy is not currently active."
   utter_policy_status:
     - condition:
         - type: slot

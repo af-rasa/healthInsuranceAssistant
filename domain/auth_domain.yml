@@ -44,11 +44,6 @@ slots:
     mappings:
       - type: custom
 
-  flow_name:
-    type: text
-    mappings:
-      - type: custom
-
 responses:
   utter_ask_member_id:
     - text: "Please enter your member ID:"
@@ -64,3 +59,6 @@ responses:
     - text: "You are already authenticated. No need to authenticate again."
   utter_unauthorized:
     - text: "You need to authenticate before checking your {flow_name}." # {flow_name}. #try {{ context.previous_flow_name }}
+      metadata:
+        template: jinja
+#if context.previous_flow_name is not equat to authenticate, then utter_unauthorized.

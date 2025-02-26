@@ -1,0 +1,48 @@
+flows:
+  cancel_policy:
+    description: "Allow users to cancel their health insurance policy"
+    name: "Cancel Policy"
+    steps:
+      - set_slots:
+          - flow_name: "policy cancellation"
+      - noop: true
+        next:
+          - if: slots.auth_status == false
+            then:
+              - call: authentication
+                next:
+                  - if: slots.auth_status == true
+                    then: cancel_policy_authenticated
+                  - else:
+                      - action: utter_unauthorized
+                        next: END
+          - else: "cancel_policy_authenticated"
+
+      - id: "cancel_policy_authenticated"
+        noop: true
+        next:
+          - if: slots.has_child_accounts == true
+            then:
+              - collect: selected_account_id
+                ask_before_filling: true
+              - action: check_selected_account_type
+                next: confirm_cancellation
+          - else:
+              - action: set_no_child_account_info
+                next: confirm_cancellation
+
+      - id: confirm_cancellation
+        collect: cancel_confirmation
+        ask_before_filling: true
+        next:
+          - if: slots.cancel_confirmation == true
+            then:
+              - action: cancel_policy_action
+                next: display_cancellation_result
+          - else:
+              - action: utter_cancellation_aborted
+                next: END
+
+      - id: display_cancellation_result
+        action: utter_policy_cancelled
+        next: END

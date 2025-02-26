@@ -19,6 +19,11 @@ slots:
       - office_hours
       - authentication
 
+  flow_name:
+    type: text
+    mappings:
+      - type: custom
+
 responses:
   utter_greet:
     - text: "Hello! I'm your health insurance assistant."
@@ -42,3 +47,16 @@ responses:
 
   utter_bot_capabilities:
     - text: I can do a lot of things!
+
+  utter_ask_account_selection:
+    - condition:
+        - type: slot
+          name: flow_name
+          value: "policy status"
+      text: "Which account's policy status would you like to check?"
+    - condition:
+        - type: slot
+          name: flow_name
+          value: "cancel account"
+      text: "Which account would you like to cancel?"
+    - text: "Which account would you like to select?" # Default fallback

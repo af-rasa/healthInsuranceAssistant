@@ -13,9 +13,7 @@ flows:
                 next:
                   - if: slots.auth_status == true
                     then: policy_status_authenticated
-                  - else:
-                      - action: utter_unauthorized
-                        next: END
+                  - else: END
           - else: "policy_status_authenticated"
 
       - id: "policy_status_authenticated"
@@ -23,6 +21,8 @@ flows:
         next:
           - if: slots.has_child_accounts == true
             then:
+              - set_slots:
+                  - account_selection_message: "Which account's policy status would you like to check today?"
               - collect: selected_account_id
                 ask_before_filling: true
               - action: check_specific_policy_status

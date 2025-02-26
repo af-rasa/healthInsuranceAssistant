@@ -78,8 +78,9 @@ class AskSelectedAccountId(Action):
         for child in (tracker.get_slot("child_accounts") or []):
             buttons.append(self._create_account_button(child['name'], child['memberID']))
         
+        # Use a response template instead of a slot value
         dispatcher.utter_message(
-            text="Which account's policy status would you like to check?",
+            response="utter_ask_account_selection",
             buttons=buttons
         )
         return []
