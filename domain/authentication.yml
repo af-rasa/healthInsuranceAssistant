@@ -1,7 +1,7 @@
 actions:
   - authenticate_user_action
   - auth_successful
-  # - continue_conversation
+  - action_ask_selected_account_id
 
 slots:
   member_found:
@@ -27,7 +27,7 @@ slots:
   member_dob:
     type: text
     mappings:
-      - type: from_llm
+      - type: custom
 
   policy_end_date:
     type: text
@@ -44,6 +44,17 @@ slots:
     mappings:
       - type: custom
 
+  selected_account_id:
+    type: text
+    mappings:
+      - type: from_llm
+
+  auth_status:
+    type: bool
+    initial_value: false
+    mappings:
+      - type: custom
+
 responses:
   utter_ask_member_id:
     - text: "Please enter your member ID:"
@@ -53,12 +64,15 @@ responses:
     - text: "Please enter your date of birth (YYYY-MM-DD):"
   utter_incorrect_dob:
     - text: "The date of birth you entered doesn't match our records."
+
+  # Authentication messages
   utter_auth_successful:
     - text: "Authentication successful!"
+  utter_auth_successful_no_children:
+    - text: "Authentication successful! You are now logged in."
   utter_already_authenticated:
     - text: "You are already authenticated. No need to authenticate again."
-  utter_unauthorized:
-    - text: "You need to authenticate before checking your {flow_name}." # {flow_name}. #try {{ context.previous_flow_name }}
-      metadata:
-        template: jinja
-#if context.previous_flow_name is not equat to authenticate, then utter_unauthorized.
+
+  # Account selection message - used by the action
+  utter_select_account:
+    - text: "Please select which account you'd like to work with at this time:"

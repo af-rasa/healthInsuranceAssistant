@@ -1,6 +1,0 @@
-flows:
-  bot_capabilities:
-    description: "Handles questions about what the bot can do."
-    steps:
-      - action: utter_bot_capabilities
-      # will automatically go to patter completion (utter_can_do_something_else)

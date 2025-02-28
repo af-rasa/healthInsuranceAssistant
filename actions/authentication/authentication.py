@@ -70,22 +70,6 @@ class AuthenticateUser(Action):
             return [SlotSet("member_found", False)]
 
 
-
-# class CompareDOB(Action):
-#     def name(self) -> Text:
-#         return "compare_dob"
-
-#     def run(self, dispatcher: CollectingDispatcher,
-#             tracker: Tracker,
-#             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
-        
-#         dob_input = tracker.get_slot("dob_input")
-#         stored_dob = tracker.get_slot("member_dob")
-        
-#         # Simple string comparison for now
-#         # In production, you might want to parse and compare actual dates
-#         return []  # The flow will handle the comparison
-
 class AuthSuccessful(Action):
     def name(self) -> Text:
         return "auth_successful"
@@ -94,6 +78,5 @@ class AuthSuccessful(Action):
             tracker: Tracker,
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
         
-        # dispatcher.utter_message(response="utter_auth_successful")
-        return [SlotSet("auth_status", True)] 
-
+        # Set auth_status to true - user is now authenticated
+        return [SlotSet("auth_status", True)]

@@ -1,7 +1,0 @@
-flows:
-  greeting:
-    description: "Handle initial greetings from users."
-    steps:
-      - action: utter_greet
-      # - action: utter_can_do_something_else
-      # will automatically go to patter completion (utter_can_do_something_else)

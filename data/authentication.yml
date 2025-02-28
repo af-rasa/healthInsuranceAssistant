@@ -1,0 +1,45 @@
+flows:
+  authentication:
+    description: "Authenticate user with member ID and DOB. If already authenticated and has child accounts, show account selection."
+    steps:
+      - noop: true
+        next:
+          - if: slots.auth_status == false
+            then:
+              - collect: member_id
+              - action: authenticate_user_action
+                next:
+                  - if: slots.member_found
+                    then:
+                      - collect: dob_input
+                        next:
+                          - if: slots.dob_input == slots.member_dob
+                            then:
+                              - action: auth_successful
+                                next:
+                                  - if: slots.has_child_accounts == true
+                                    then:
+                                      - action: utter_auth_successful
+                                      - collect: selected_account_id
+                                        ask_before_filling: true
+                                        next: END
+                                  - else:
+                                      - action: utter_auth_successful_no_children
+                                        next: END
+                          - else:
+                              - action: utter_incorrect_dob
+                                next: END
+                  - else:
+                      - action: utter_member_not_found
+                        next: END
+          - else:
+              - noop: true
+                next:
+                  - if: slots.has_child_accounts == true
+                    then:
+                      - collect: selected_account_id
+                        ask_before_filling: true
+                        next: END
+                  - else:
+                      - action: utter_already_authenticated
+                        next: END
