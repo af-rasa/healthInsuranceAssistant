@@ -4,6 +4,11 @@ actions:
   - action_ask_selected_account_id
 
 slots:
+  current_date:
+    type: text
+    mappings:
+      - type: custom
+
   member_found:
     type: bool
     mappings:
@@ -33,6 +38,21 @@ slots:
     type: text
     mappings:
       - type: custom
+
+  selected_account_name:
+    type: text
+    mappings:
+      - type: from_llm
+
+  selected_account_dob:
+    type: text
+    mappings:
+      - type: from_llm
+
+  selected_policy_end_date:
+    type: text
+    mappings:
+      - type: from_llm
 
   has_child_accounts:
     type: bool

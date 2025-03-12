@@ -22,21 +22,39 @@ class ActionAskSelectedAccountId(Action):
         # Get primary account information from conversation tracker
         primary_id = tracker.get_slot("member_id")      # Primary account holder's ID
         primary_name = tracker.get_slot("member_name")  # Primary account holder's name
+        primary_dob = tracker.get_slot("member_dob")
+        primary_policy_end_date = tracker.get_slot("policy_end_date")
         
-        # Create button for primary account holder
+        # Create button for primary account holder with full slot updates
+        primary_payload = (
+            f"/SetSlots("
+            f"selected_account_id='{primary_id}',"
+            f"selected_account_name='{primary_name}',"
+            f"selected_account_dob='{primary_dob}',"
+            f"selected_policy_end_date='{primary_policy_end_date}')"
+        )
+        
         buttons.append({
-            "title": f"{primary_name} (Primary Account Holder)",  # Button text
-            "payload": f"/SetSlots(selected_account_id='{primary_id}')"  # What happens when button is clicked
+            "title": f"{primary_name} (Primary Account Holder)",
+            "payload": primary_payload
         })
         
         # Get list of child accounts (if any exist)
         child_accounts = tracker.get_slot("child_accounts") or []
         
-        # Create a button for each child account
+        # Create a button for each child account with full slot updates
         for child in child_accounts:
+            child_payload = (
+                f"/SetSlots("
+                f"selected_account_id='{child['memberID']}',"
+                f"selected_account_name='{child['name']}',"
+                f"selected_account_dob='{child['dob']}',"
+                f"selected_policy_end_date='{child['policyEndDate']}')"
+            )
+            
             buttons.append({
-                "title": f"{child['name']}",  # Button text shows child's name
-                "payload": f"/SetSlots(selected_account_id='{child['memberID']}')"  # Sets selected ID to child's ID
+                "title": f"{child['name']}",
+                "payload": child_payload
             })
         
         # Use a response from the domain for the message text
