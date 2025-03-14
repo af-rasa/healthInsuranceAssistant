@@ -2,9 +2,17 @@ actions:
   - authenticate_user_action
   - auth_successful
   - action_ask_selected_account_id
+  - action_track_selected_account
+  - action_clear_selected_account
+  - action_session_start
 
 slots:
   current_date:
+    type: text
+    mappings:
+      - type: custom
+
+  flow_name:
     type: text
     mappings:
       - type: custom
@@ -88,11 +96,14 @@ responses:
   # Authentication messages
   utter_auth_successful:
     - text: "Authentication successful!"
-  utter_auth_successful_no_children:
-    - text: "Authentication successful! You are now logged in."
+  # utter_auth_successful_no_children:
+  #   - text: "Authentication successful! You are now logged in."
   utter_already_authenticated:
     - text: "You are already authenticated. No need to authenticate again."
 
   # Account selection message - used by the action
   utter_select_account:
     - text: "Please select which account you'd like to work with at this time:"
+
+  utter_debug_selected_account:
+    - text: "Debug - Current slots:\nSelected ID: {selected_account_id}\nSelected Name: {selected_account_name}\nSelected DOB: {selected_account_dob}"

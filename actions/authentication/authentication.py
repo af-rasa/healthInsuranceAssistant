@@ -4,6 +4,11 @@ from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
 import requests
 from datetime import datetime
+import logging
+from .db_service import DBService
+
+# Add logger at top of file
+logger = logging.getLogger(__name__)
 
 class AuthenticateUser(Action):
     def name(self) -> Text:
@@ -14,60 +19,27 @@ class AuthenticateUser(Action):
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
         
         member_id = tracker.get_slot("member_id")
+        logger.info("Authenticating user with ID: %s", member_id)
         
-        try:
-            response = requests.get(
-                'https://api.jsonbin.io/v3/b/67aa6b3aacd3cb34a8dd1abb',
-                headers={'X-Master-Key': '$2a$10$j9N2X2cOS686Gk5IRXITw.8JhMMn9o/66t2N9h2twDPIkLse3uVHW'}
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                records = data['record']
-                
-                # Find matching member by ID
-                member_record = next(
-                    (record for record in records if record['memberID'] == member_id),
-                    None
-                )
-                
-                if member_record:
-                    events = [
-                        SlotSet("member_found", True),
-                        SlotSet("member_name", member_record['name']),
-                        SlotSet("member_dob", member_record['dob']),
-                        SlotSet("policy_end_date", member_record['policyEndDate']),
-                        SlotSet("has_child_accounts", member_record['has_child_accounts'])
-                    ]
+        member_record = DBService.find_account_by_id(member_id)
+        
+        if member_record:
+            events = [
+                SlotSet("member_found", True),
+                SlotSet("member_id", member_record['memberID']),
+                SlotSet("member_name", member_record['name']),
+                SlotSet("member_dob", member_record['dob']),
+                SlotSet("policy_end_date", member_record['policyEndDate']),
+                SlotSet("has_child_accounts", member_record['has_child_accounts'])
+            ]
 
-                    # Handle child accounts if they exist
-                    if member_record['has_child_accounts'] and member_record['child_accounts']:
-                        child_ids = [id.strip() for id in member_record['child_accounts'].split(',')]
-                        child_details = []
-                        
-                        # Fetch details for each child account
-                        for child_id in child_ids:
-                            child_record = next(
-                                (record for record in records if record['memberID'] == child_id),
-                                None
-                            )
-                            if child_record:
-                                child_details.append({
-                                    'memberID': child_record['memberID'],
-                                    'name': child_record['name'],
-                                    'dob': child_record['dob'],
-                                    'policyEndDate': child_record['policyEndDate']
-                                })
-                        
-                        events.append(SlotSet("child_accounts", child_details))
-                    
-                    return events
-                
-            return [SlotSet("member_found", False)]
+            if member_record['has_child_accounts'] and member_record['child_accounts']:
+                child_details = DBService.get_child_accounts(member_record['child_accounts'])
+                events.append(SlotSet("child_accounts", child_details))
             
-        except Exception as e:
-            print(f"Error accessing JSONbin: {str(e)}")
-            return [SlotSet("member_found", False)]
+            return events
+            
+        return [SlotSet("member_found", False)]
 
 
 class AuthSuccessful(Action):
@@ -78,5 +50,84 @@ class AuthSuccessful(Action):
             tracker: Tracker,
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
         
-        # Set auth_status to true - user is now authenticated
-        return [SlotSet("auth_status", True)]
+        # For accounts without children, set selected account details to main account
+        has_child_accounts = tracker.get_slot("has_child_accounts")
+        events = [SlotSet("auth_status", True)]
+        
+        if not has_child_accounts:
+            logger.info("No child accounts - setting selected account details to main account")
+            events.extend([
+                SlotSet("selected_account_id", tracker.get_slot("member_id")),
+                SlotSet("selected_account_name", tracker.get_slot("member_name")),
+                SlotSet("selected_account_dob", tracker.get_slot("member_dob")),
+                SlotSet("selected_policy_end_date", tracker.get_slot("policy_end_date"))
+            ])
+            
+            # Add debug log
+            logger.info("Set selected account details: ID=%s, Name=%s, DOB=%s, Policy End=%s",
+                       tracker.get_slot("member_id"),
+                       tracker.get_slot("member_name"),
+                       tracker.get_slot("member_dob"),
+                       tracker.get_slot("policy_end_date"))
+        
+        return events
+
+class ActionTrackSelectedAccount(Action):
+    def name(self) -> Text:
+        return "action_track_selected_account"
+
+    def run(self, dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+        
+        selected_id = tracker.get_slot("selected_account_id")
+        if selected_id:
+            selected_id = selected_id.strip("'")
+        
+        logger.info("=== Selected Account Tracking ===")
+        logger.info("selected_account_id after cleaning: %s", selected_id)
+
+        selected_record = DBService.find_account_by_id(selected_id)
+        
+        if selected_record:
+            events = [
+                SlotSet("selected_account_id", selected_id),
+                SlotSet("selected_account_name", selected_record['name']),
+                SlotSet("selected_account_dob", selected_record['dob']),
+                SlotSet("selected_policy_end_date", selected_record['policyEndDate'])
+            ]
+            
+            # debug_msg = (
+            #     "Debug - Selected Account Details:\n"
+            #     f"Name: {selected_record['name']}\n"
+            #     f"ID: {selected_id}\n"
+            #     f"DOB: {selected_record['dob']}\n"
+            #     f"Policy End: {selected_record['policyEndDate']}"
+            # )
+            # dispatcher.utter_message(text=debug_msg)
+            
+            return events
+            
+        logger.warning("No match found for ID: %s", selected_id)
+        return []
+
+class ActionClearSelectedAccount(Action):
+    def name(self) -> Text:
+        return "action_clear_selected_account"
+
+    def run(self, dispatcher: CollectingDispatcher,
+            tracker: Tracker,
+            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+        
+        logger.info("=== Clearing Selected Account Details ===")
+        
+        # Clear all selected_ slots but maintain member_ slots
+        events = [
+            SlotSet("selected_account_id", None),
+            SlotSet("selected_account_name", None),
+            SlotSet("selected_account_dob", None),
+            SlotSet("selected_policy_end_date", None)
+        ]
+        
+        logger.info("Cleared selected account slots")
+        return events

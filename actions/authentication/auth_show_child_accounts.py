@@ -2,6 +2,10 @@ from typing import Any, Text, Dict, List
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
+import logging
+
+# Add logger at top of file
+logger = logging.getLogger(__name__)
 
 class ActionAskSelectedAccountId(Action):
     """
@@ -16,48 +20,34 @@ class ActionAskSelectedAccountId(Action):
             tracker: Tracker,
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
         
-        # Initialize empty list to store our button options
-        buttons = []
+        # Log current slot values
+        logger.info("Current slot values in ActionAskSelectedAccountId:")
+        logger.info("selected_account_id: %s", tracker.get_slot("selected_account_id"))
+        logger.info("member_id: %s", tracker.get_slot("member_id"))
+        logger.info("member_name: %s", tracker.get_slot("member_name"))
         
-        # Get primary account information from conversation tracker
-        primary_id = tracker.get_slot("member_id")      # Primary account holder's ID
-        primary_name = tracker.get_slot("member_name")  # Primary account holder's name
-        primary_dob = tracker.get_slot("member_dob")
-        primary_policy_end_date = tracker.get_slot("policy_end_date")
+        # Create primary account button
+        primary_id = tracker.get_slot("member_id")
+        primary_name = tracker.get_slot("member_name")
+        logger.info("Creating primary account button with ID: %s", primary_id)
+
+        buttons = [{
+            'title': f"{primary_name} (Primary Account Holder)",
+            'payload': f"/SetSlots{{\"selected_account_id\":\"{primary_id}\"}}"
+        }]
         
-        # Create button for primary account holder with full slot updates
-        primary_payload = (
-            f"/SetSlots("
-            f"selected_account_id='{primary_id}',"
-            f"selected_account_name='{primary_name}',"
-            f"selected_account_dob='{primary_dob}',"
-            f"selected_policy_end_date='{primary_policy_end_date}')"
-        )
-        
-        buttons.append({
-            "title": f"{primary_name} (Primary Account Holder)",
-            "payload": primary_payload
-        })
-        
-        # Get list of child accounts (if any exist)
+        # Add child account buttons if they exist
         child_accounts = tracker.get_slot("child_accounts") or []
-        
-        # Create a button for each child account with full slot updates
         for child in child_accounts:
-            child_payload = (
-                f"/SetSlots("
-                f"selected_account_id='{child['memberID']}',"
-                f"selected_account_name='{child['name']}',"
-                f"selected_account_dob='{child['dob']}',"
-                f"selected_policy_end_date='{child['policyEndDate']}')"
-            )
-            
             buttons.append({
-                "title": f"{child['name']}",
-                "payload": child_payload
+                'title': child['name'],
+                'payload': f"/SetSlots{{\"selected_account_id\":\"{child['memberID']}\"}}"
             })
         
+        # Log the final buttons being sent
+        logger.info("Sending buttons: %s", buttons)
+        
         # Use a response from the domain for the message text
-        dispatcher.utter_message(response="utter_select_account", buttons=buttons)
+        dispatcher.utter_message(text="Please select which account you'd like to work with at this time:", buttons=buttons)
         
         return []

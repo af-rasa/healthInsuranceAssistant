@@ -22,9 +22,10 @@ flows:
                                       - action: utter_auth_successful
                                       - collect: selected_account_id
                                         ask_before_filling: true
+                                      - action: action_track_selected_account
                                         next: END
                                   - else:
-                                      - action: utter_auth_successful_no_children
+                                      - action: utter_auth_successful
                                         next: END
                           - else:
                               - action: utter_incorrect_dob
@@ -37,8 +38,10 @@ flows:
                 next:
                   - if: slots.has_child_accounts == true
                     then:
+                      - action: action_clear_selected_account
                       - collect: selected_account_id
                         ask_before_filling: true
+                      - action: action_track_selected_account
                         next: END
                   - else:
                       - action: utter_already_authenticated

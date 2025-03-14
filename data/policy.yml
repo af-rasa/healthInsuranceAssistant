@@ -1,0 +1,31 @@
+flows:
+  policy_status:
+    description: "Check if the policy is active or inactive"
+    steps:
+      - set_slots:
+          - flow_name: "policy status"
+      - noop: true
+        next:
+          - if: slots.auth_status == false
+            then:
+              - call: authentication
+                next:
+                  - if: slots.auth_status == true
+                    then: policy_status_authenticated
+                  - else: END
+          - else: "policy_status_authenticated"
+
+      - id: "policy_status_authenticated"
+        noop: true
+        next:
+          - if: slots.current_date < slots.selected_policy_end_date
+            then:
+              - set_slots:
+                  - is_policy_active: true
+              - action: utter_policy_status
+                next: END
+          - else:
+              - set_slots:
+                  - is_policy_active: false
+              - action: utter_policy_status
+                next: END
