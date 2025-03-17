@@ -77,6 +77,11 @@ slots:
     mappings:
       - type: from_llm
 
+  working_selected_account_id:
+    type: text
+    mappings:
+      - type: custom
+
   auth_status:
     type: bool
     initial_value: false

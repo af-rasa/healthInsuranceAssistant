@@ -10,5 +10,5 @@ responses:
         - type: slot
           name: is_policy_active
           value: true
-      text: "As of {current_date}, {selected_account_name}'s policy is active and due to end on {selected_policy_end_date}."
-    - text: "As of {current_date}, {selected_account_name}'s policy is not active. The policy ended on {selected_policy_end_date}."
+      text: "As of {current_date}, {selected_account_name}'s (ID: {working_selected_account_id}) policy is active and due to end on {selected_policy_end_date}."
+    - text: "As of {current_date}, {selected_account_name}'s (ID: {working_selected_account_id}) policy is not active. The policy ended on {selected_policy_end_date}."

@@ -1,15 +1,26 @@
-from .authentication.authentication import AuthenticateUser
-from .authentication.authentication import AuthSuccessful
-from .authentication.authentication import ActionTrackSelectedAccount
-from .authentication.authentication import ActionClearSelectedAccount
-from .authentication.auth_show_child_accounts import ActionAskSelectedAccountId
-from .session_start_action import ActionSessionStart
+from typing import List, Type
+from rasa_sdk import Action
+
+from .authentication.auth_actions import AuthenticateUserAction
+from .authentication.auth_actions import AuthSuccessful
+from .authentication.auth_actions import ActionAskSelectedAccountId
+from .authentication.auth_actions import ActionTrackSelectedAccount
+from .authentication.auth_actions import ActionClearSelectedAccount
 
 __all__ = [
-    'AuthenticateUser',
+    'AuthenticateUserAction',
     'AuthSuccessful',
     'ActionAskSelectedAccountId',
     'ActionTrackSelectedAccount',
-    'ActionClearSelectedAccount',
-    'ActionSessionStart'
+    'ActionClearSelectedAccount'
 ]
+
+def get_default_actions() -> List[Type[Action]]:
+    """Return all actions for the bot."""
+    return [
+        AuthenticateUserAction,
+        AuthSuccessful,
+        ActionAskSelectedAccountId,
+        ActionTrackSelectedAccount,
+        ActionClearSelectedAccount
+    ]
