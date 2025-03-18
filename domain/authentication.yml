@@ -27,6 +27,13 @@ slots:
     mappings:
       - type: from_llm
 
+  # New slot to permanently store the primary account member ID
+  # This never changes during the session, even when working with child accounts
+  primary_account_memberID:
+    type: text
+    mappings:
+      - type: custom
+
   dob_input:
     type: text
     mappings:
