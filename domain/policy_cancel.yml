@@ -1,0 +1,71 @@
+actions:
+  - cancel_policy_action
+
+slots:
+  confirm_cancellation:
+    type: bool
+    mappings:
+      - type: from_llm
+
+  is_primary_account:
+    type: bool
+    mappings:
+      - type: from_llm
+
+  is_policy_active:
+    type: bool
+    mappings:
+      - type: from_llm
+
+  was_policy_cancelled:
+    type: bool
+    mappings:
+      - type: from_llm
+
+responses:
+  utter_cannot_cancel_inactive_policy:
+    - text: "Your policy is not active.  It was terminated on {selected_policy_end_date}. You cannot cancel it."
+
+  utter_ask_confirm_cancellation:
+    - text: "Are you sure you want to cancel your account"
+      buttons:
+        - title: YES
+          payload: "/SetSlots(confirm_cancellation=true)"
+        - title: NO
+          payload: "/SetSlots(confirm_cancellation=false)"
+
+  utter_cancelled_policy_status:
+    - condition:
+        - type: slot
+          name: was_policy_cancelled
+          value: true
+        - type: slot
+          name: confirm_cancellation
+          value: true
+        - type: slot
+          name: is_primary_account
+          value: true
+      text: "Your policy and all child accounts have been cancelled. The coverage for all accounts will end today."
+    - condition:
+        - type: slot
+          name: was_policy_cancelled
+          value: true
+        - type: slot
+          name: confirm_cancellation
+          value: true
+        - type: slot
+          name: is_primary_account
+          value: false
+      text: "Your policy has been cancelled. Your coverage will end today."
+    - condition:
+        - type: slot
+          name: was_policy_cancelled
+          value: false
+        - type: slot
+          name: confirm_cancellation
+          value: true
+      text: "There was an error cancelling your policy. Please try again later."
+    - text: "Your policy has not been cancelled. Your coverage will continue as normal."
+
+  utter_you_have_child_accounts:
+    - text: "You have child accounts. Cancelling your policy will also cancel your child accounts."

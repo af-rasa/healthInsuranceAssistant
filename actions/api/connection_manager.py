@@ -180,13 +180,15 @@ class ConnectionManager:
     #         logger.error(f"Error accessing database API: {str(e)}")
     #         return []
     
-    # Placeholder for future functionality
     def update_member_data(self, member_id: str, data: Dict[str, Any]) -> bool:
         """
-        Updates member data in the database (placeholder for future implementation).
+        Updates member data in the database.
         
-        This method is not yet implemented but represents future functionality
-        for updating member records.
+        This implementation:
+        1. Gets the current full database
+        2. Finds the member record by ID
+        3. Updates the specified fields
+        4. Writes the entire updated database back to JSONbin
         
         Args:
             member_id: The member's unique identifier
@@ -195,6 +197,55 @@ class ConnectionManager:
         Returns:
             Boolean indicating success (True) or failure (False)
         """
-        # This will be implemented in the future when write access is needed
-        logger.info(f"Update member data called (not yet implemented)")
-        return False 
+        try:
+            logger.info(f"Updating member data for ID: {member_id}")
+            
+            # First, get the current full database content
+            response = requests.get(self.base_url, headers=self.headers)
+            
+            if response.status_code != 200:
+                logger.error(f"Failed to retrieve database: HTTP {response.status_code}")
+                return False
+            
+            # Parse database content
+            db_data = response.json()
+            records = db_data['record']
+            
+            # Find the member record to update
+            found = False
+            for record in records:
+                if record['memberID'] == member_id:
+                    # Update specified fields in the record
+                    for key, value in data.items():
+                        record[key] = value
+                    found = True
+                    break
+            
+            if not found:
+                logger.error(f"Member ID not found in database: {member_id}")
+                return False
+            
+            # Prepare headers for update operation - need Content-Type for write operations
+            update_headers = self.headers.copy()
+            update_headers['Content-Type'] = 'application/json'
+            
+            # Write the entire updated database back to JSONbin
+            update_response = requests.put(
+                self.base_url,
+                json=records,  # JSONbin expects the data directly, not wrapped
+                headers=update_headers
+            )
+            
+            # Check if update was successful
+            if update_response.status_code == 200:
+                logger.info(f"Successfully updated member data for ID: {member_id}")
+                return True
+            else:
+                logger.error(f"Failed to update database: HTTP {update_response.status_code}")
+                logger.error(f"Response: {update_response.text}")
+                return False
+                
+        except Exception as e:
+            # Handle any exceptions during the update process
+            logger.error(f"Error updating member data: {str(e)}")
+            return False 

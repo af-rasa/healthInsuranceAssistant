@@ -46,7 +46,8 @@ class AuthenticateUserAction(Action):
                 SlotSet("has_child_accounts", member_record['has_child_accounts']),
                 # Store the primary account member ID in a dedicated slot
                 # This will never change during the session, even when working with child accounts
-                SlotSet("primary_account_memberID", member_record['memberID'])
+                SlotSet("primary_account_memberID", member_record['memberID']),
+                SlotSet("working_selected_account_id", member_record['memberID'])
             ]
             
             # Also set the primary account as the selected account by default

@@ -1,0 +1,73 @@
+flows:
+  policy_cancel:
+    description: "Cancel the policy"
+    steps:
+      - set_slots:
+          - flow_name: "policy cancel"
+      - noop: true
+        next:
+          - if: slots.auth_status == false
+            then:
+              - call: authentication
+                next:
+                  - if: slots.auth_status == true
+                    then: check_if_has_child_accounts
+                  - else: END
+          - else: "check_if_has_child_accounts"
+
+      - id: "check_if_has_child_accounts"
+        noop: true
+        next:
+          - if: slots.working_selected_account_id == slots.primary_account_memberID and slots.has_child_accounts == true
+            then:
+              - set_slots:
+                  - is_primary_account: true
+              - action: utter_you_have_child_accounts
+                next: "is_policy_active"
+          - else:
+              - set_slots:
+                  - is_primary_account: false
+                next: "is_policy_active"
+
+      - id: "is_policy_active"
+        noop: true
+        next:
+          - if: slots.current_date >= slots.selected_policy_end_date
+            then:
+              - set_slots:
+                  - is_policy_active: false
+              - action: utter_cannot_cancel_inactive_policy
+                next: END
+          - else:
+              - set_slots:
+                  - is_policy_active: true
+                next: "policy_cancel_authenticated"
+
+      - id: "policy_cancel_authenticated"
+        collect: "confirm_cancellation"
+        ask_before_filling: true
+        next: "cancel_policy_action"
+
+      - id: "cancel_policy_action"
+        noop: true
+        next:
+          - if: slots.confirm_cancellation == true
+            then:
+              - action: cancel_policy_action
+                next:
+                  - if: slots.was_policy_cancelled == true
+                    then:
+                      - action: utter_cancelled_policy_status
+                      - set_slots:
+                          - is_primary_account: false
+                        next: END
+                  - else:
+                      - action: utter_cancelled_policy_status
+                      - set_slots:
+                          - is_primary_account: false
+                        next: END
+          - else:
+              - action: utter_cancelled_policy_status
+              - set_slots:
+                  - is_primary_account: false
+                next: END
